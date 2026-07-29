@@ -1,0 +1,12 @@
+# 仮想環境
+venv/
+.venv/
+
+# Pythonのキャッシュ
+__pycache__/
+
+# 機密情報・環境変数
+.env
+
+# データベース
+*.sqlite3
