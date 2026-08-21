@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 from books.models import BookItem
 from books.models import Book
@@ -24,7 +25,7 @@ class Loan(models.Model):
         BookItem, on_delete=models.PROTECT, verbose_name="蔵書", related_name="loans"
     )
 
-    loaned_at = models.DateTimeField(auto_now_add=True, verbose_name="貸出日時")
+    loaned_at = models.DateTimeField(default=timezone.now, verbose_name="貸出日時")
 
     due_date = models.DateField(verbose_name="返却期限日")
 
