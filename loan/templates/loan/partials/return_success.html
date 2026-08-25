@@ -1,0 +1,9 @@
+<!-- 通常のレスポンス部分がないため、hx-targetの要素は空に置き換えられる -->
+ 
+<!-- 返却成功メッセージを画面上部の#message-containerへOOB更新 -->
+<div id="message-container" hx-swap-oob="true">
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+</div>
