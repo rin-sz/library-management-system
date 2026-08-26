@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 # Create your models here.
@@ -52,6 +53,9 @@ class Book(models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return reverse("books:book_detail", kwargs={"pk": self.pk})
+
 
 class BookItem(models.Model):
 
@@ -73,3 +77,7 @@ class BookItem(models.Model):
 
     def __str__(self):
         return f"{self.book.title} -{self.location.name}"
+
+    @property
+    def is_available(self):
+        return self.status == self.Status.AVAILABLE
