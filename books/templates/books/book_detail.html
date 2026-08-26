@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Django messages（成功・エラー通知） -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'books:book_list' %}">書籍一覧</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
+        </ol>
+    </nav>
+
+    <!-- 書籍情報 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-3 text-center">
+                    {% if book.thumbnail_url %}
+                    <img src="{{ book.thumbnail_url }}" alt="{{ book.title }}" class="img-fluid rounded border shadow-sm" style="max-height: 280px;">
+                    {% else %}
+                    <div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center" style="height: 220px;">
+                        <span class="text-muted">No Image</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-9">
+                    <h2 class="h3 mb-3">{{ book.title }}</h2>
+                    <table class="table table-borderless table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 100px;" class="text-muted">著者</th>
+                                <td>{{ book.author }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">出版社</th>
+                                <td>{{ book.publisher }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">出版日</th>
+                                <td>{{ book.published_date|date:"Y/m/d"|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">ISBN</th>
+                                <td><code>{{ book.isbn }}</code></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">カテゴリ</th>
+                                <td>{{ book.category.name|default:"未指定" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全蔵書が貸出中の場合の「予約案内」ブロック -->
+    {% if not book.has_available_items %}
+    <div class="card bg-warning-subtle border-warning p-3 mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h4 class="h6 text-warning-emphasis fw-bold mb-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>現在、すべての蔵書が貸出中です
+                </h4>
+                <p class="small text-muted mb-0">予約を行うと、蔵書が返却され次第優先的に借りることができます。</p>
+            </div>
+            <!-- 予約フォーム -->
+            <form method="post" action="{% url 'loan:reserve' %}">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" value="{{ book.pk }}">
+                <button type="submit" class="btn btn-warning text-dark fw-bold btn-sm">
+                    <i class="bi bi-bookmark-plus me-1"></i>この書籍を予約する
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 蔵書一覧および貸出手続き -->
+    <h3 class="h4 mb-3">所蔵状況・貸出手続き</h3>
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>蔵書ID</th>
+                        <th>状況</th>
+                        <th class="text-end">貸出設定・操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in book.items.all %}
+                    <tr>
+                        <td>No. {{ item.pk }}</td>
+                        <td>
+                            {% if item.is_available %}
+                                <span class="badge bg-success">{{ item.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ item.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if item.is_available %}
+                                <form method="post" action="{% url 'loan:borrow' %}" class="d-inline-flex align-items-center gap-2 float-end">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="book_item_id" value="{{ item.pk }}">
+                                    
+                                    <!-- フォームオブジェクト（form.start_date）が存在する場合は活用し、ない場合はフォールバック -->
+                                    {% if form.start_date %}
+                                        {{ form.start_date.label_tag }}
+                                        {{ form.start_date }}
+                                    {% else %}
+                                        <label class="small text-muted mb-0">開始日:</label>
+                                        <input type="date" name="start_date" class="form-control form-control-sm"
+                                            style="width: 150px;"
+                                            value="{% now 'Y-m-d' %}"
+                                            min="{% now 'Y-m-d' %}"
+                                            required>
+                                    {% endif %}
+
+                                    <button type="submit" class="btn btn-primary btn-sm text-nowrap">
+                                        貸出する
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                    貸出不可
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-3">この書籍の蔵書は登録されていません。</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
