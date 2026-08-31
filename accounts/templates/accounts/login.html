@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}ログイン - 図書管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        
+        <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="text-center mb-4">ログイン</h2>
+
+                <!-- ログイン失敗時のエラーメッセージ -->
+                {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        ユーザー名またはパスワードが正しくありません。
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4 login-form-wrapper">
+                        {{ form.as_p }}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            ログイン
+                        </button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Django標準フォームをBootstrap風に整えるための簡易CSS -->
+<style>
+    .login-form-wrapper p {
+        margin-bottom: 1rem;
+    }
+    .login-form-wrapper label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    .login-form-wrapper input {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+    }
+    .login-form-wrapper input:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+{% endblock %}
