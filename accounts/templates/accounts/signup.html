@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}新規アカウント登録 - 図書管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        
+        <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="text-center mb-4">アカウント作成</h2>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="badge bg-danger ms-1">必須</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-1">任意</span>
+                                {% endif %}
+                            </label>
+                            
+                            {{ field }}
+                            
+                            <!-- バリデーションエラーがある場合 -->
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ field.errors.0 }}
+                                </div>
+                            {% endif %}
+
+                            <!-- パスワードのルール等のヘルプテキスト -->
+                            {% if field.help_text %}
+                                <div class="form-text text-muted">
+                                    {{ field.help_text|safe }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-grid mb-3 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            登録して始める
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="mb-0 text-muted">すでにアカウントをお持ちですか？</p>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-link text-decoration-none p-0">
+                        ログインはこちら
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
