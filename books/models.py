@@ -56,12 +56,18 @@ class Book(models.Model):
     def get_absolute_url(self):
         return reverse("books:book_detail", kwargs={"pk": self.pk})
 
+    @property
+    def has_available_items(self) -> bool:
+        """貸出可能な蔵書（AVAILABLE）が1冊でも存在するかどうか"""
+        return self.items.filter(status=BookItem.Status.AVAILABLE).exists()
+
 
 class BookItem(models.Model):
 
     class Status(models.IntegerChoices):
         AVAILABLE = 1, "貸出可能"
         LOANED = 2, "貸出中"
+        RESERVED = 3, "取り置き中"
 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="items")
 
@@ -81,3 +87,11 @@ class BookItem(models.Model):
     @property
     def is_available(self):
         return self.status == self.Status.AVAILABLE
+
+    @property
+    def is_reserved(self) -> bool:
+        return self.status == self.Status.RESERVED
+
+    @property
+    def is_loaned(self) -> bool:
+        return self.status == self.Status.LOANED

@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 
 from books.models import BookItem
 from books.models import Book
@@ -25,7 +24,7 @@ class Loan(models.Model):
         BookItem, on_delete=models.PROTECT, verbose_name="蔵書", related_name="loans"
     )
 
-    loaned_at = models.DateTimeField(default=timezone.now, verbose_name="貸出日時")
+    loaned_at = models.DateField(verbose_name="貸出開始日")
 
     due_date = models.DateField(verbose_name="返却期限日")
 
@@ -113,3 +112,11 @@ class Reservation(models.Model):
                 name="unique_active_reservation_per_user_and_book",
             )
         ]
+
+    @property
+    def is_ready(self) -> bool:
+        return self.status == ReservationStatus.READY
+
+    @property
+    def is_waiting(self) -> bool:
+        return self.status == ReservationStatus.WAITING
