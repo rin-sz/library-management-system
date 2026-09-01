@@ -5,8 +5,8 @@ from django.contrib.messages import get_messages
 from django.test import TestCase, tag
 from django.urls import reverse
 from django.utils import timezone
-from loan.models import BookItem, Loan
 
+from loan.models import Loan
 from books.models import Book, BookItem, Location
 
 User = get_user_model()

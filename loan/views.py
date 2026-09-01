@@ -4,11 +4,11 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import BorrowForm, ReturnForm
+from .forms import BorrowForm, ReturnForm, ReserveForm
 
-from .models import BookItem, Loan, LoanStatus
+from .models import Book, BookItem, Loan, LoanStatus, Reservation, ReservationStatus
 
-from .services import borrow_book_item, return_book_item
+from .services import borrow_book_item, return_book_item, reserve_book
 
 # Create your views here.
 
@@ -18,8 +18,25 @@ def my_loans_view(request):
     loans = request.user.loans.filter(status=LoanStatus.BORROWED).select_related(
         "book_item__book"
     )
+    reservations = (
+        request.user.reservations.filter(
+            status__in=[
+                ReservationStatus.WAITING,
+                ReservationStatus.READY,
+            ]
+        )
+        .select_related("book")
+        .order_by("reserved_at")
+    )
 
-    return render(request, "loan/my_loans.html", {"loans": loans})
+    return render(
+        request,
+        "loan/my_loans.html",
+        {
+            "loans": loans,
+            "reservations": reservations,
+        },
+    )
 
 
 @login_required
@@ -116,3 +133,31 @@ def return_view(request):
         messages.error(request, error_msg)
 
     return redirect("loan:my_loans")
+
+
+@login_required
+@require_POST
+def reserve_view(request):
+    form = ReserveForm(request.POST)
+
+    if form.is_valid():
+        book_id = form.cleaned_data["book_id"]
+        book = get_object_or_404(Book, pk=book_id)
+
+        try:
+            reserve_book(user=request.user, book=book)
+            messages.success(request, f"『{book.title}』の予約が完了しました。")
+            return redirect("books:book_detail", pk=book.pk)
+
+        except ValidationError as e:
+            for message in e.messages:
+                messages.error(request, message)
+            return redirect("books:book_detail", pk=book.pk)
+
+    else:
+        messages.error(request, "入力内容に誤りがあるか、不正なリクエストです。")
+        book_id = request.POST.get("book_id")
+        if book_id and Book.objects.filter(pk=book_id).exists():
+            return redirect("books:book_detail", pk=book_id)
+
+    return redirect("books:book_list")
