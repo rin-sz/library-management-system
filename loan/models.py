@@ -80,6 +80,15 @@ class Reservation(models.Model):
         verbose_name="書籍",
     )
 
+    book_item = models.ForeignKey(
+        BookItem,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reservations",
+        verbose_name="取り置き蔵書",
+    )
+
     status = models.IntegerField(
         choices=ReservationStatus.choices,
         default=ReservationStatus.WAITING,

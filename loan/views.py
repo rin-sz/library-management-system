@@ -3,12 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from django.http import HttpResponse
 
 from .forms import BorrowForm, ReturnForm, ReserveForm
 
-from .models import Book, BookItem, Loan, LoanStatus, Reservation, ReservationStatus
+from .models import Book, BookItem, Loan, LoanStatus, ReservationStatus
 
-from .services import borrow_book_item, return_book_item, reserve_book
+from .services import (
+    borrow_book_item,
+    return_book_item,
+    reserve_book,
+    cancel_reservation,
+)
 
 # Create your views here.
 
@@ -43,6 +49,7 @@ def my_loans_view(request):
 def borrow_view(request):
     if request.method == "POST":
         form = BorrowForm(request.POST)
+
         if form.is_valid():
             book_item_id = form.cleaned_data["book_item_id"]
             start_date = form.cleaned_data["start_date"]
@@ -50,8 +57,11 @@ def borrow_view(request):
 
             try:
                 loan = borrow_book_item(
-                    user=request.user, book_item=book_item, start_date=start_date
+                    user=request.user,
+                    book_item_id=book_item.pk,
+                    start_date=start_date,
                 )
+
                 messages.success(
                     request,
                     f"『{book_item.book.title}』の貸し出し手続きが完了しました。",
@@ -63,10 +73,13 @@ def borrow_view(request):
                     messages.error(request, message)
                 return redirect("books:book_detail", pk=book_item.book.pk)
         else:
-            # フォームバリデーションエラー時も messages に入れてリダイレクト
-            messages.error(request, "不正なリクエストです。もう一度お試しください。")
+            messages.error(
+                request,
+                "不正なリクエストです。もう一度お試しください。",
+            )
 
             book_item_id = request.POST.get("book_item_id")
+
             if book_item_id and BookItem.objects.filter(pk=book_item_id).exists():
                 item = BookItem.objects.get(pk=book_item_id)
                 return redirect("books:book_detail", pk=item.book.pk)
@@ -161,3 +174,34 @@ def reserve_view(request):
             return redirect("books:book_detail", pk=book_id)
 
     return redirect("books:book_list")
+
+
+@login_required
+@require_POST
+def reserve_cancel_view(request):
+    """予約キャンセル処理"""
+    reservation_id_raw = request.POST.get("reservation_id")
+
+    if not reservation_id_raw:
+        messages.error(request, "キャンセル対象の予約が指定されていません。")
+        return redirect("loan:my_loans")
+
+    try:
+        reservation_id = int(reservation_id_raw)
+        cancel_reservation(
+            reservation_id=reservation_id,
+            user=request.user,
+        )
+    except ValueError:
+        # 数値変換エラー時のユーザー向けメッセージ
+        messages.error(request, "不正な予約IDが指定されました。")
+    except ValidationError as e:
+        # ValidationErrorのメッセージリストを個別に展開
+        for message in e.messages:
+            messages.error(request, message)
+    else:
+        messages.success(request, "予約をキャンセルしました。")
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse("")
+
+    return redirect("loan:my_loans")

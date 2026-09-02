@@ -9,4 +9,5 @@ urlpatterns = [
     path("borrow/success/<int:pk>/", views.borrow_success_view, name="borrow_success"),
     path("return/", views.return_view, name="return"),
     path("reserve/", views.reserve_view, name="reserve"),
+    path("reservation/cancel/", views.reserve_cancel_view, name="reservation_cancel"),
 ]
