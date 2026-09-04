@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h1>管理者ダッシュボード</h1>
+        <p class="text-muted mb-0">
+            図書管理システムの管理状況を確認できます。
+        </p>
+    </div>
+
+    <h2 class="h4 mb-3">図書館情報</h2>
+
+    <div class="row g-4 mb-5">
+        {% for stat in library_stats %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="h6 text-muted mb-3">
+                        {{ stat.label }}
+                    </h3>
+
+                    <div class="d-flex align-items-end gap-2">
+                        <span class="display-5 fw-bold">
+                            {{ stat.value }}
+                        </span>
+                        <span class="text-muted mb-2">
+                            {{ stat.unit }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted mb-0 mt-2">
+                        {{ stat.description }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="h4 mb-3">利用状況</h2>
+
+    <div class="row g-4">
+        {% for stat in usage_stats %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="h6 text-muted mb-3">
+                        {{ stat.label }}
+                    </h3>
+
+                    <div class="d-flex align-items-end gap-2">
+                        <span class="display-5 fw-bold {% if stat.is_alert %}text-danger{% endif %}">
+                            {{ stat.value }}
+                        </span>
+                        <span class="text-muted mb-2">
+                            {{ stat.unit }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted mb-0 mt-2">
+                        {{ stat.description }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

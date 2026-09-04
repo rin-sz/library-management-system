@@ -35,7 +35,12 @@
                             貸出中一覧
                         </a>
                     {% endif %}
-                    
+
+                    {% if perms.books.view_book %}
+                        <a href="{% url 'management:dashboard' %}" class="btn btn-outline-secondary">
+                            管理者画面
+                        </a>
+                    {% endif %}
                     <!-- ログアウト用のフォーム -->
                     <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
                         {% csrf_token %}
