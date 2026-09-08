@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- ページタイトル -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-2">書誌情報管理</h1>
+            <p class="text-muted mb-0">
+                登録されている書誌情報を確認できます。
+            </p>
+        </div>
+
+        <!-- 登録機能は後で実装 -->
+        <a href="#" class="btn btn-primary">
+            書誌情報を登録
+        </a>
+    </div>
+
+
+    <!-- 書誌情報一覧 -->
+    <div class="card">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">書誌情報一覧</h2>
+            <span class="text-muted small">
+                全{{ page_obj.paginator.count }}件中
+                {{ page_obj.start_index }}~{{ page_obj.end_index }}件を表示
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0 align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">ISBN</th>
+                            <th scope="col">タイトル</th>
+                            <th scope="col">著者</th>
+                            <th scope="col">出版社</th>
+                            <th scope="col">出版日</th>
+                            <th scope="col" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for book in page_obj %}
+
+                        <tr>
+
+                            <!-- ISBN -->
+                            <td>
+                                {{ book.isbn }}
+                            </td>
+
+                            <!-- タイトル -->
+                            <td>
+                                {{ book.title }}
+                            </td>
+
+                            <!-- 著者 -->
+                            <td>
+                                {{ book.author }}
+                            </td>
+
+                            <!-- 出版社 -->
+                            <td>
+                                {{ book.publisher }}
+                            </td>
+
+                            <!-- 出版日 -->
+                            <td>
+                                {% if book.published_date %}
+                                    {{ book.published_date|date:"Y/m/d" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <!-- 操作 -->
+                            <td class="text-center">
+
+                                <div class="d-flex justify-content-center gap-2">
+
+                                    <!-- 詳細機能は後で実装 -->
+                                    <a
+                                        href="#"
+                                        class="btn btn-sm btn-outline-secondary"
+                                    >
+                                        詳細
+                                    </a>
+
+                                    <!-- 編集機能は後で実装 -->
+                                    <a
+                                        href="#"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        編集
+                                    </a>
+
+                                    <!-- 削除機能は後で実装 -->
+                                    <a
+                                        href="#"
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
+                                        削除
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                書誌情報が登録されていません。
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ページネーション -->
+    {% if page_obj.has_other_pages %}
+
+    <nav
+        class="mt-4"
+        aria-label="書誌情報一覧のページ"
+    >
+
+        <ul class="pagination justify-content-center">
+
+            <!-- 前へ -->
+            {% if page_obj.has_previous %}
+
+            <li class="page-item">
+
+                <a
+                    class="page-link"
+                    href="?page={{ page_obj.previous_page_number }}"
+                    aria-label="前のページ"
+                >
+                    前へ
+                </a>
+
+            </li>
+
+            {% else %}
+
+            <li class="page-item disabled">
+
+                <span
+                    class="page-link"
+                    aria-hidden="true"
+                >
+                    前へ
+                </span>
+
+            </li>
+
+            {% endif %}
+
+
+            <!-- ページ番号 -->
+            {% for num in page_range %}
+
+                {% if num == page_obj.paginator.ELLIPSIS %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        …
+                    </span>
+
+                </li>
+
+                {% elif num == page_obj.number %}
+
+                <!-- 現在のページ -->
+                <li class="page-item active" aria-current="page">
+
+                    <span class="page-link">
+                        {{ num }}
+                    </span>
+
+                </li>
+
+                {% else %}
+
+                <!-- その他のページ -->
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ num }}"
+                    >
+                        {{ num }}
+                    </a>
+
+                </li>
+
+                {% endif %}
+
+            {% endfor %}
+
+
+            {% if page_obj.has_next %}
+
+            <li class="page-item">
+
+                <a
+                    class="page-link"
+                    href="?page={{ page_obj.next_page_number }}"
+                    aria-label="次のページ"
+                >
+                    次へ
+                </a>
+
+            </li>
+
+            {% else %}
+
+            <li class="page-item disabled">
+
+                <span
+                    class="page-link"
+                    aria-hidden="true"
+                >
+                    次へ
+                </span>
+
+            </li>
+
+            {% endif %}
+
+        </ul>
+
+    </nav>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
