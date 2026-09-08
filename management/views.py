@@ -1,7 +1,10 @@
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Q
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.generic import ListView
+from django.urls import reverse
 
 from books.models import Book, BookItem, Category, Location
 from loan.models import (
@@ -42,6 +45,7 @@ def _get_reservation_stats():
     )
 
 
+@login_required
 @permission_required("books.view_book", raise_exception=True)
 def dashboard_view(request):
     today = timezone.localdate()
@@ -55,6 +59,7 @@ def dashboard_view(request):
                 "value": Book.objects.count(),
                 "unit": "件",
                 "description": "登録されている書誌情報",
+                "url": reverse("management:book_list"),
             },
             {
                 "label": "蔵書",
@@ -111,3 +116,21 @@ def dashboard_view(request):
         "management/dashboard.html",
         context,
     )
+
+
+class BookListView(PermissionRequiredMixin, ListView):
+    model = Book
+    template_name = "management/books/list.html"
+    paginate_by = 20
+    permission_required = "books.view_book"
+    raise_exception = True
+    ordering = ["title"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_range"] = context["page_obj"].paginator.get_elided_page_range(
+            number=context["page_obj"].number,
+            on_each_side=2,
+            on_ends=1,
+        )
+        return context
