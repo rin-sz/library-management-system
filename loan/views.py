@@ -106,7 +106,7 @@ def return_view(request):
         if is_htmx:
             response = render(
                 request,
-                "loan/partials/message_alert.html",
+                "partials/message_alert.html",
                 {"message": error_msg, "tags": "danger"},
             )
             response["HX-Retarget"] = "#message-container"
@@ -136,7 +136,7 @@ def return_view(request):
         if is_htmx:
             response = render(
                 request,
-                "loan/partials/message_alert.html",
+                "partials/message_alert.html",
                 {"message": error_msg, "tags": "danger"},
             )
             response["HX-Retarget"] = "#message-container"
