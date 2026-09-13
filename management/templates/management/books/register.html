@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<!-- HTMX（このページで利用） -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <h1>書誌情報登録</h1>
+
+    <div id="message-container"></div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <label for="isbn-input" class="form-label">ISBN</label>
+            <input
+                type="text"
+                id="isbn-input"
+                name="isbn"
+                class="form-control"
+                placeholder="ISBNを入力してください"
+                hx-post="{% url 'management:book_isbn_search' %}"
+                hx-trigger="keyup changed delay:500ms, search"
+                hx-target="#search-result"
+                hx-indicator="#search-spinner"
+            >
+            <div id="search-spinner" class="htmx-indicator text-muted mt-2">
+                検索中...
+            </div>
+        </div>
+    </div>
+
+    <div id="search-result"></div>
+</div>
+{% endblock %}

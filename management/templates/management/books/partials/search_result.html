@@ -1,0 +1,89 @@
+<form hx-post="{% url 'management:book_create' %}"
+      hx-target="#search-result"
+      hx-swap="innerHTML">
+
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <div class="mb-3 text-center">
+                {% if form.thumbnail_url.value %}
+                    <img src="{{ form.thumbnail_url.value }}" alt="表紙画像" class="img-thumbnail" style="max-height: 200px;">
+                {% else %}
+                    <div class="border rounded d-inline-flex flex-column align-items-center justify-content-center text-muted bg-light p-3" style="width: 140px; height: 200px;">
+                        <span class="small">表紙画像は<br>取得できませんでした</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.isbn.id_for_label }}" class="form-label">ISBN</label>
+                {{ form.isbn }}
+                {% if form.isbn.errors %}
+                    <div class="text-danger small">{{ form.isbn.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">タイトル</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="text-danger small">{{ form.title.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.author.id_for_label }}" class="form-label">著者</label>
+                {{ form.author }}
+                {% if form.author.errors %}
+                    <div class="text-danger small">{{ form.author.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.publisher.id_for_label }}" class="form-label">出版社</label>
+                {{ form.publisher }}
+                {% if form.publisher.errors %}
+                    <div class="text-danger small">{{ form.publisher.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.published_date.id_for_label }}" class="form-label">出版日</label>
+                {{ form.published_date }}
+                {% if form.published_date.errors %}
+                    <div class="text-danger small">{{ form.published_date.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.category.id_for_label }}" class="form-label">カテゴリ</label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                    <div class="text-danger small">{{ form.category.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <div class="mb-3">
+                <label for="{{ form.location.id_for_label }}" class="form-label">保管場所</label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                    <div class="text-danger small">{{ form.location.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.quantity.id_for_label }}" class="form-label">冊数</label>
+                {{ form.quantity }}
+                {% if form.quantity.errors %}
+                    <div class="text-danger small">{{ form.quantity.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            {{ form.thumbnail_url }}
+
+            <button type="submit" class="btn btn-primary">登録する</button>
+        </div>
+    </div>
+</form>

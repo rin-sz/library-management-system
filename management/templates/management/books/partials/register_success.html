@@ -1,0 +1,23 @@
+<!-- 登録フォーム部分(#search-result)は空に置き換えられる -->
+
+<!-- ISBN入力欄もクリア -->
+<input
+    type="text"
+    id="isbn-input"
+    name="isbn"
+    class="form-control"
+    placeholder="ISBNを入力してください"
+    hx-swap-oob="true"
+    hx-post="{% url 'management:book_isbn_search' %}"
+    hx-trigger="keyup changed delay:500ms, search"
+    hx-target="#search-result"
+    hx-indicator="#search-spinner"
+>
+
+<!-- 登録成功メッセージを画面上部の#message-containerへOOB更新 -->
+<div id="message-container" hx-swap-oob="true">
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+</div>
