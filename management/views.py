@@ -1,10 +1,15 @@
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib import messages
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.generic import ListView
+from django.views.decorators.http import require_POST
 from django.urls import reverse
+from .openbd import get_book_by_isbn, OpenBDError
+from .forms import BookRegisterForm
 
 from books.models import Book, BookItem, Category, Location
 from loan.models import (
@@ -13,6 +18,10 @@ from loan.models import (
     LoanStatus,
     ReservationStatus,
 )
+
+from .openbd import get_book_by_isbn, OpenBDError
+from .forms import BookRegisterForm, BookItemAddForm
+from .service import increase_stock
 
 
 # Create your views here.
@@ -134,3 +143,161 @@ class BookListView(PermissionRequiredMixin, ListView):
             on_ends=1,
         )
         return context
+
+
+def _build_stock_summary(book: Book):
+    """指定したBookの、保管場所ごとの蔵書数一覧を [(location名, 冊数), ...] で返す。"""
+    summary = (
+        book.items.values("location__name")
+        .annotate(count=Count("id"))
+        .order_by("location__name")
+    )
+    return [(row["location__name"], row["count"]) for row in summary]
+
+
+@login_required
+@permission_required("books.add_book", raise_exception=True)
+def book_register_view(request):
+    """ISBN入力画面(初期表示)"""
+    form = BookRegisterForm()
+    return render(request, "management/books/register.html", {"form": form})
+
+
+@login_required
+@permission_required("books.add_book", raise_exception=True)
+@require_POST
+def book_isbn_search_view(request):
+    """HTMXから呼ばれる、ISBN検索の部分レスポンス"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    isbn = request.POST.get("isbn", "").strip().replace("-", "")
+
+    if not isbn:
+        return render(
+            request,
+            "management/books/partials/search_not_found.html",
+            {"message": "ISBNを入力してください。"},
+        )
+
+    # 既に登録済みのISBNであれば openBD には問い合わせず、
+    # 既存Bookへの蔵書追加フローへ振り分ける
+    existing_book = Book.objects.filter(isbn=isbn).first()
+    if existing_book:
+        return render(
+            request,
+            "management/books/partials/search_result_existing.html",
+            {
+                "book": existing_book,
+                "stock_summary": _build_stock_summary(existing_book),
+                "form": BookItemAddForm(),
+            },
+        )
+
+    try:
+        book_data = get_book_by_isbn(isbn)
+    except OpenBDError:
+        error_msg = "openBDへの接続に失敗しました。時間をおいて再度お試しください。"
+        if is_htmx:
+            response = render(
+                request,
+                "partials/message_alert.html",
+                {"message": error_msg, "tags": "danger"},
+            )
+            response["HX-Retarget"] = "#message-container"
+            response["HX-Reswap"] = "innerHTML"
+            return response
+        messages.error(request, error_msg)
+        return redirect("management:book_register")
+
+    if book_data is None:
+        return render(
+            request,
+            "management/books/partials/search_not_found.html",
+            {"message": "該当する書籍情報が見つかりませんでした。"},
+        )
+
+    form = BookRegisterForm(initial=book_data)
+    return render(
+        request,
+        "management/books/partials/search_result.html",
+        {"form": form},
+    )
+
+
+@login_required
+@permission_required("books.add_book", raise_exception=True)
+@require_POST
+def book_create_view(request):
+    """登録ボタン押下時(新規Book + 蔵書の登録)"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    form = BookRegisterForm(request.POST)
+
+    if not form.is_valid():
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/search_result.html",
+                {"form": form},
+            )
+        messages.error(request, "入力内容に誤りがあります。")
+        return redirect("management:book_register")
+
+    location = form.cleaned_data["location"]
+    quantity = form.cleaned_data["quantity"]
+
+    with transaction.atomic():
+        book = form.save()
+        increase_stock(book, location, quantity)
+
+    success_msg = f"『{book.title}』を{quantity}冊登録しました。"
+
+    if is_htmx:
+        return render(
+            request,
+            "management/books/partials/register_success.html",
+            {"message": success_msg},
+        )
+
+    messages.success(request, success_msg)
+    return redirect("management:book_list")
+
+
+@login_required
+@permission_required("books.add_book", raise_exception=True)
+@require_POST
+def book_item_create_view(request, book_id):
+    """既存Bookに対する蔵書追加登録"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    book = get_object_or_404(Book, pk=book_id)
+    form = BookItemAddForm(request.POST)
+
+    if not form.is_valid():
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/search_result_existing.html",
+                {
+                    "book": book,
+                    "stock_summary": _build_stock_summary(book),
+                    "form": form,
+                },
+            )
+        messages.error(request, "入力内容に誤りがあります。")
+        return redirect("management:book_register")
+
+    location = form.cleaned_data["location"]
+    quantity = form.cleaned_data["quantity"]
+
+    with transaction.atomic():
+        increase_stock(book, location, quantity)
+
+    success_msg = f"『{book.title}』を{quantity}冊追加登録しました。"
+
+    if is_htmx:
+        return render(
+            request,
+            "management/books/partials/register_success.html",
+            {"message": success_msg},
+        )
+
+    messages.success(request, success_msg)
+    return redirect("management:book_list")

@@ -1,0 +1,65 @@
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="mb-3 text-center">
+            {% if book.thumbnail_url %}
+                <img src="{{ book.thumbnail_url }}" alt="表紙画像" class="img-thumbnail" style="max-height: 200px;">
+            {% else %}
+                <div class="border rounded d-inline-flex flex-column align-items-center justify-content-center text-muted bg-light p-3" style="width: 140px; height: 200px;">
+                    <span class="small">表紙画像は<br>取得できませんでした</span>
+                </div>
+            {% endif %}
+        </div>
+        <h5>{{ book.title }}</h5>
+        <p class="text-muted mb-1">{{ book.author }} / {{ book.publisher }}</p>
+        <p class="text-muted mb-0">ISBN {{ book.isbn }}</p>
+        <div class="alert alert-info mt-3 mb-0">
+            この書籍は既に登録されています。蔵書を追加登録できます。
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h6 class="card-title">現在の蔵書状況</h6>
+        {% if stock_summary %}
+            <ul class="list-group list-group-flush">
+                {% for location_name, count in stock_summary %}
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>{{ location_name }}</span>
+                        <span>{{ count }}冊</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted mb-0">現在登録されている蔵書はありません。</p>
+        {% endif %}
+    </div>
+</div>
+
+<form hx-post="{% url 'management:book_item_create' book.pk %}"
+      hx-target="#search-result"
+      hx-swap="innerHTML">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="card-title">蔵書を追加登録</h6>
+
+            <div class="mb-3">
+                <label for="{{ form.location.id_for_label }}" class="form-label">保管場所</label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                    <div class="text-danger small">{{ form.location.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.quantity.id_for_label }}" class="form-label">追加冊数</label>
+                {{ form.quantity }}
+                {% if form.quantity.errors %}
+                    <div class="text-danger small">{{ form.quantity.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">追加登録する</button>
+        </div>
+    </div>
+</form>
