@@ -61,6 +61,16 @@ class Book(models.Model):
         """貸出可能な蔵書（AVAILABLE）が1冊でも存在するかどうか"""
         return self.items.filter(status=BookItem.Status.AVAILABLE).exists()
 
+    @property
+    def has_active_items(self):
+        return self.bookitem_set.filter(
+            status__in=[
+                BookItem.Status.AVAILABLE,
+                BookItem.Status.LOANED,
+                BookItem.Status.RESERVED,
+            ]
+        ).exists()
+
 
 class BookItem(models.Model):
 
@@ -68,6 +78,7 @@ class BookItem(models.Model):
         AVAILABLE = 1, "貸出可能"
         LOANED = 2, "貸出中"
         RESERVED = 3, "取り置き中"
+        DISPOSED = 4, "廃棄済み"
 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="items")
 
