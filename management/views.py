@@ -9,7 +9,13 @@ from django.views.generic import ListView
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from .openbd import get_book_by_isbn, OpenBDError
-from .forms import BookRegisterForm
+from .forms import (
+    BookRegisterForm,
+    BookUpdateForm,
+    BookItemRemoveForm,
+    BookItemIncreaseQuantityForm,
+)
+from .service import decrease_stock
 
 from books.models import Book, BookItem, Category, Location
 from loan.models import (
@@ -322,3 +328,163 @@ def book_item_create_view(request, book_id):
 
     messages.success(request, success_msg)
     return redirect("management:book_list")
+
+
+@login_required
+@permission_required("books.view_book", raise_exception=True)
+def book_edit_view(request, book_id):
+    """書籍編集画面の表示(書誌情報編集・蔵書数編集を1画面にまとめる)"""
+    book = get_object_or_404(Book, pk=book_id)
+    existing_location = _get_existing_location(book)
+    context = {
+        "book": book,
+        "book_form": BookUpdateForm(instance=book),
+        "stock_summary": _build_stock_summary(book),
+        "existing_location": existing_location,
+        "increase_form": (
+            BookItemIncreaseQuantityForm() if existing_location else BookItemAddForm()
+        ),
+        "decrease_form": BookItemRemoveForm(),
+    }
+    return render(request, "management/books/edit.html", context)
+
+
+@login_required
+@permission_required("books.change_book", raise_exception=True)
+@require_POST
+def book_update_view(request, book_id):
+    """書誌情報(Book本体)の更新"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    book = get_object_or_404(Book, pk=book_id)
+    book_form = BookUpdateForm(request.POST, instance=book)
+
+    if not book_form.is_valid():
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/book_info_section.html",
+                {"book": book, "book_form": book_form},
+            )
+        messages.error(request, "入力内容に誤りがあります。")
+        return redirect("management:book_edit", book_id=book.id)
+
+    book_form.save()
+    success_msg = f"『{book.title}』の書誌情報を更新しました。"
+
+    if is_htmx:
+        return render(
+            request,
+            "management/books/partials/book_info_section.html",
+            {"book": book, "book_form": BookUpdateForm(instance=book)},
+        )
+    messages.success(request, success_msg)
+    return redirect("management:book_edit", book_id=book.id)
+
+
+@login_required
+@permission_required("books.change_book", raise_exception=True)
+@require_POST
+def book_item_increase_view(request, book_id):
+    """編集画面からの蔵書増加"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    book = get_object_or_404(Book, pk=book_id)
+    increase_form = BookItemAddForm(request.POST)
+
+    if not increase_form.is_valid():
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/stock_section.html",
+                {
+                    "book": book,
+                    "stock_summary": _build_stock_summary(book),
+                    "increase_form": increase_form,
+                    "decrease_form": BookItemRemoveForm(),
+                },
+            )
+        messages.error(request, "入力内容に誤りがあります。")
+        return redirect("management:book_edit", book_id=book.id)
+
+    location = increase_form.cleaned_data["location"]
+    quantity = increase_form.cleaned_data["quantity"]
+
+    with transaction.atomic():
+        increase_stock(book, location, quantity)
+
+    success_msg = f"『{book.title}』を{quantity}冊追加しました。"
+
+    if is_htmx:
+        return render(
+            request,
+            "management/books/partials/stock_section.html",
+            {
+                "book": book,
+                "stock_summary": _build_stock_summary(book),
+                "increase_form": BookItemAddForm(),
+                "decrease_form": BookItemRemoveForm(),
+            },
+        )
+    messages.success(request, success_msg)
+    return redirect("management:book_edit", book_id=book.id)
+
+
+@login_required
+@permission_required("books.change_book", raise_exception=True)
+@require_POST
+def book_item_decrease_view(request, book_id):
+    """編集画面からの蔵書減少"""
+    is_htmx = request.headers.get("HX-Request") == "true"
+    book = get_object_or_404(Book, pk=book_id)
+    decrease_form = BookItemRemoveForm(request.POST)
+
+    if not decrease_form.is_valid():
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/stock_section.html",
+                {
+                    "book": book,
+                    "stock_summary": _build_stock_summary(book),
+                    "increase_form": BookItemAddForm(),
+                    "decrease_form": decrease_form,
+                },
+            )
+        messages.error(request, "入力内容に誤りがあります。")
+        return redirect("management:book_edit", book_id=book.id)
+
+    quantity = decrease_form.cleaned_data["quantity"]
+
+    try:
+        with transaction.atomic():
+            decrease_stock(book, quantity)
+    except ValueError as e:
+        decrease_form.add_error("quantity", str(e))
+        if is_htmx:
+            return render(
+                request,
+                "management/books/partials/stock_section.html",
+                {
+                    "book": book,
+                    "stock_summary": _build_stock_summary(book),
+                    "increase_form": BookItemAddForm(),
+                    "decrease_form": decrease_form,
+                },
+            )
+        messages.error(request, str(e))
+        return redirect("management:book_edit", book_id=book.id)
+
+    success_msg = f"『{book.title}』を{quantity}冊減らしました。"
+
+    if is_htmx:
+        return render(
+            request,
+            "management/books/partials/stock_section.html",
+            {
+                "book": book,
+                "stock_summary": _build_stock_summary(book),
+                "increase_form": BookItemAddForm(),
+                "decrease_form": BookItemRemoveForm(),
+            },
+        )
+    messages.success(request, success_msg)
+    return redirect("management:book_edit", book_id=book.id)
