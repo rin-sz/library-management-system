@@ -1,0 +1,43 @@
+<div id="stock-section">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>保管場所</th>
+        <th>冊数</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for location_name, count in stock_summary %}
+      <tr>
+        <td>{{ location_name }}</td>
+        <td>{{ count }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2">蔵書がありません</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h6>蔵書を増やす</h6>
+      <form hx-post="{% url 'management:book_item_increase' book.id %}"
+            hx-target="#stock-section"
+            hx-swap="outerHTML">
+        {{ increase_form.as_p }}
+        <button type="submit" class="btn btn-primary">増やす</button>
+      </form>
+    </div>
+    <div class="col-md-6">
+      <h6>蔵書を減らす</h6>
+      <form hx-post="{% url 'management:book_item_decrease' book.id %}"
+            hx-target="#stock-section"
+            hx-swap="outerHTML">
+        {{ decrease_form.as_p }}
+        <button type="submit" class="btn btn-outline-danger">減らす</button>
+      </form>
+    </div>
+  </div>
+</div>

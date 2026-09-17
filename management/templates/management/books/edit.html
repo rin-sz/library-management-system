@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<!-- HTMX（このページで利用） -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <h1>{{ book.title }} の編集</h1>
+
+    <div id="message-container"></div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">書誌情報</h2>
+            {% include "management/books/partials/book_info_section.html" %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">蔵書数</h2>
+            {% include "management/books/partials/stock_section.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
