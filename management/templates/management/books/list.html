@@ -88,29 +88,14 @@
 
                                 <div class="d-flex justify-content-center gap-2">
 
-                                    <!-- 詳細機能は後で実装 -->
-                                    <a
-                                        href="#"
-                                        class="btn btn-sm btn-outline-secondary"
-                                    >
-                                        詳細
-                                    </a>
 
-                                    <!-- 編集機能は後で実装 -->
                                     <a
-                                        href="#"
+                                        href="{% url 'management:book_edit' book.id %}"
                                         class="btn btn-sm btn-outline-primary"
                                     >
                                         編集
                                     </a>
 
-                                    <!-- 削除機能は後で実装 -->
-                                    <a
-                                        href="#"
-                                        class="btn btn-sm btn-outline-danger"
-                                    >
-                                        削除
-                                    </a>
 
                                 </div>
 
