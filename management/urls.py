@@ -16,4 +16,16 @@ urlpatterns = [
         views.book_item_create_view,
         name="book_item_create",
     ),
+    path("books/<int:book_id>/edit/", views.book_edit_view, name="book_edit"),
+    path("books/<int:book_id>/update/", views.book_update_view, name="book_update"),
+    path(
+        "books/<int:book_id>/stock/increase/",
+        views.book_item_increase_view,
+        name="book_item_increase",
+    ),
+    path(
+        "books/<int:book_id>/stock/decrease/",
+        views.book_item_decrease_view,
+        name="book_item_decrease",
+    ),
 ]

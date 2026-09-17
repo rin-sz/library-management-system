@@ -1,0 +1,8 @@
+<div id="book-info-section">
+  <form hx-post="{% url 'management:book_update' book.id %}"
+        hx-target="#book-info-section"
+        hx-swap="outerHTML">
+    {{ book_form.as_p }}
+    <button type="submit" class="btn btn-primary">書誌情報を更新</button>
+  </form>
+</div>
