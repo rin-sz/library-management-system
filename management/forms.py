@@ -61,3 +61,57 @@ class BookItemAddForm(forms.Form):
         initial=1,
         widget=forms.NumberInput(attrs={"class": "form-control"}),
     )
+
+
+class BookUpdateForm(forms.ModelForm):
+    """既存Bookの書誌情報を編集するためのフォーム。
+
+    isbnは書籍を一意に識別する項目であり、登録フロー側の重複判定の前提
+    となっているため、編集対象から意図的に除外する。
+    """
+
+    class Meta:
+        model = Book
+        fields = [
+            "title",
+            "author",
+            "publisher",
+            "published_date",
+            "thumbnail_url",
+            "category",
+        ]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "author": forms.TextInput(attrs={"class": "form-control"}),
+            "publisher": forms.TextInput(attrs={"class": "form-control"}),
+            "published_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "thumbnail_url": forms.URLInput(attrs={"class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+        }
+
+
+class BookItemRemoveForm(forms.Form):
+    """既存Bookの蔵書(BookItem)を減らすためのフォーム。quantityのみで完結する。"""
+
+    quantity = forms.IntegerField(
+        label="減らす冊数",
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+    )
+
+
+class BookItemIncreaseQuantityForm(forms.Form):
+    """既に在庫がある本に、蔵書を追加するためのフォーム。
+
+    locationは既存在庫の場所に固定されるため、quantityのみを受け取る。
+    """
+
+    quantity = forms.IntegerField(
+        label="追加冊数",
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+    )
