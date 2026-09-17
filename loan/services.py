@@ -187,6 +187,18 @@ def reserve_book(*, user, book: Book) -> Reservation:
         if is_already_borrowed:
             raise ValidationError("現在貸出中の書籍は予約できません。")
 
+        has_active_item = BookItem.objects.filter(
+            book=locked_book,
+            status__in=[
+                BookItem.Status.AVAILABLE,
+                BookItem.Status.LOANED,
+                BookItem.Status.RESERVED,
+            ],
+        ).exists()
+
+        if not has_active_item:
+            raise ValidationError("現在蔵書がありません。")
+
         has_available_item = BookItem.objects.filter(
             book=locked_book, status=BookItem.Status.AVAILABLE
         ).exists()

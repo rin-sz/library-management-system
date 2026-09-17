@@ -11,6 +11,15 @@ class BooklistView(ListView):
     template_name = "books/book_list.html"
     context_object_name = "books"
 
+    def get_queryset(self):
+        return Book.objects.filter(
+            bookitem__status__in=[
+                BookItem.Status.AVAILABLE,
+                BookItem.Status.LOANED,
+                BookItem.Status.RESERVED,
+            ]
+        ).distinct()
+
 
 class BookDetailView(DetailView):
     model = Book

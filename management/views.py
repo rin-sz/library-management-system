@@ -72,7 +72,13 @@ def dashboard_view(request):
             },
             {
                 "label": "蔵書",
-                "value": BookItem.objects.count(),
+                "value": BookItem.objects.filter(
+                    status__in=[
+                        BookItem.Status.AVAILABLE,
+                        BookItem.Status.LOANED,
+                        BookItem.Status.RESERVED,
+                    ]
+                ).count(),
                 "unit": "冊",
                 "description": "登録されている蔵書",
             },
@@ -148,11 +154,26 @@ class BookListView(PermissionRequiredMixin, ListView):
 def _build_stock_summary(book: Book):
     """指定したBookの、保管場所ごとの蔵書数一覧を [(location名, 冊数), ...] で返す。"""
     summary = (
-        book.items.values("location__name")
+        book.items.exclude(status=BookItem.Status.DISPOSED)
+        .values("location__name")
         .annotate(count=Count("id"))
         .order_by("location__name")
     )
     return [(row["location__name"], row["count"]) for row in summary]
+
+
+def _get_existing_location(book: Book) -> Location | None:
+    """bookの蔵書が現在ある保管場所を返す(在庫がなければNone)。
+
+    廃棄済み(DISPOSED)状態は除外する。同一本は単一locationにのみ存在する前提。
+    """
+    item = (
+        BookItem.objects.filter(book=book)
+        .exclude(status=BookItem.Status.DISPOSED)
+        .select_related("location")
+        .first()
+    )
+    return item.location if item else None
 
 
 @login_required

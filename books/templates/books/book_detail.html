@@ -225,7 +225,7 @@
                 </div>
             </div>
 
-        {% else %}
+        {% elif book.has_active_items %}
 
             <!-- 貸出可能な蔵書がない場合は予約 -->
             <div class="row align-items-center g-3">
@@ -269,7 +269,8 @@
 
                 </div>
             </div>
-
+        {% else %}
+            <p class="text-muted">現在蔵書がありません。</p>
         {% endif %}
 
     </div>
