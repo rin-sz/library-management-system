@@ -13,7 +13,7 @@ class BooklistView(ListView):
 
     def get_queryset(self):
         return Book.objects.filter(
-            bookitem__status__in=[
+            items__status__in=[
                 BookItem.Status.AVAILABLE,
                 BookItem.Status.LOANED,
                 BookItem.Status.RESERVED,
