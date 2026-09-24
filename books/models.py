@@ -63,7 +63,7 @@ class Book(models.Model):
 
     @property
     def has_active_items(self):
-        return self.bookitem_set.filter(
+        return self.items.filter(
             status__in=[
                 BookItem.Status.AVAILABLE,
                 BookItem.Status.LOANED,
