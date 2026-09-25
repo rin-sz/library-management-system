@@ -147,6 +147,37 @@ class BookListView(PermissionRequiredMixin, ListView):
     raise_exception = True
     ordering = ["title"]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        query = self.request.GET.get("q", "").strip()
+        category_id = self.request.GET.get("category", "").strip()
+        location_id = self.request.GET.get("location", "").strip()
+
+        valid_status_values = {str(value) for value, _ in BookItem.Status.choices}
+        status_list = [
+            s for s in self.request.GET.getlist("status") if s in valid_status_values
+        ]
+
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query) | Q(author__icontains=query)
+            )
+
+        if category_id.isdigit():
+            queryset = queryset.filter(category_id=category_id)
+
+        item_filter = {}
+        if location_id.isdigit():
+            item_filter["items__location_id"] = location_id
+        if status_list:
+            item_filter["items__status__in"] = status_list
+
+        if item_filter:
+            queryset = queryset.filter(**item_filter).distinct()
+
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_range"] = context["page_obj"].paginator.get_elided_page_range(
@@ -154,6 +185,19 @@ class BookListView(PermissionRequiredMixin, ListView):
             on_each_side=2,
             on_ends=1,
         )
+        context["query"] = self.request.GET.get("q", "").strip()
+        context["categories"] = Category.objects.all()
+        context["locations"] = Location.objects.all()
+        context["status_choices"] = BookItem.Status.choices
+        context["selected_category"] = self.request.GET.get("category", "")
+        context["selected_location"] = self.request.GET.get("location", "")
+        context["selected_statuses"] = self.request.GET.getlist("status")
+
+        # ページネーションリンク用
+        querystring = self.request.GET.copy()
+        querystring.pop("page", None)
+        context["querystring"] = querystring.urlencode()
+
         return context
 
 

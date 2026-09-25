@@ -23,13 +23,83 @@
     <!-- 書誌情報一覧 -->
     <div class="card">
 
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <h2 class="h5 mb-0">書誌情報一覧</h2>
             <span class="text-muted small">
                 全{{ page_obj.paginator.count }}件中
                 {{ page_obj.start_index }}~{{ page_obj.end_index }}件を表示
             </span>
         </div>
+
+        <form method="get" class="row g-3 align-items-end mx-0" role="search">
+
+            <!-- キーワード検索 -->
+            <div class="col-12 col-md-3">
+                <label for="id_q" class="form-label small mb-1">キーワード</label>
+                <input
+                    type="search"
+                    id="id_q"
+                    name="q"
+                    value="{{ query }}"
+                    class="form-control form-control-sm"
+                    placeholder="タイトル・著者で検索"
+                >
+            </div>
+
+            <!-- カテゴリ -->
+            <div class="col-6 col-md-3">
+                <label for="id_category" class="form-label small mb-1">カテゴリ</label>
+                <select id="id_category" name="category" class="form-select form-select-sm">
+                    <option value="">すべて</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 保管場所 -->
+            <div class="col-6 col-md-3">
+                <label for="id_location" class="form-label small mb-1">保管場所</label>
+                <select id="id_location" name="location" class="form-select form-select-sm">
+                    <option value="">すべて</option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}" {% if selected_location == location.id|stringformat:"s" %}selected{% endif %}>
+                        {{ location.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary">検索</button>
+                {% if query or selected_category or selected_location or selected_statuses %}
+                <a href="{% url 'management:book_list' %}" class="btn btn-sm btn-outline-secondary">クリア</a>
+                {% endif %}
+            </div>
+
+            <!-- 貸出状態(複数選択) -->
+            <div class="col-12">
+                <span class="form-label small mb-1 d-block">貸出状態</span>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for value, label in status_choices %}
+                    <div class="form-check form-check-inline">
+                        <input
+                            type="checkbox"
+                            name="status"
+                            value="{{ value }}"
+                            id="id_status_{{ value }}"
+                            class="form-check-input"
+                            {% if value|stringformat:"s" in selected_statuses %}checked{% endif %}
+                        >
+                        <label class="form-check-label small" for="id_status_{{ value }}">{{ label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </form>
 
         <div class="card-body p-0">
 
@@ -107,7 +177,11 @@
 
                         <tr>
                             <td colspan="6" class="text-center text-muted py-5">
-                                書誌情報が登録されていません。
+                                {% if query %}
+                                    「{{ query }}」に一致する書誌情報が見つかりませんでした。
+                                {% else %}
+                                    書誌情報が登録されていません。
+                                {% endif %}
                             </td>
                         </tr>
 
@@ -141,7 +215,7 @@
 
                 <a
                     class="page-link"
-                    href="?page={{ page_obj.previous_page_number }}"
+                    href="?={% if querystiring %}{{ querystiring }}&{% endif %}page={{ page_obj.previous_page_number }}"
                     aria-label="前のページ"
                 >
                     前へ
@@ -196,7 +270,7 @@
 
                     <a
                         class="page-link"
-                        href="?page={{ num }}"
+                        href="?={% if querystiring %}{{ querystiring }}&{% endif %}page={{ num }}"
                     >
                         {{ num }}
                     </a>
@@ -214,7 +288,7 @@
 
                 <a
                     class="page-link"
-                    href="?page={{ page_obj.next_page_number }}"
+                    href="?={% if querystiring %}{{ querystiring }}&{% endif %}page={{ page_obj.next_page_number }}"
                     aria-label="次のページ"
                 >
                     次へ
