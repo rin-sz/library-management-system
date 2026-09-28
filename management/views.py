@@ -432,7 +432,11 @@ def book_item_increase_view(request, book_id):
     """編集画面からの蔵書増加"""
     is_htmx = request.headers.get("HX-Request") == "true"
     book = get_object_or_404(Book, pk=book_id)
-    increase_form = BookItemAddForm(request.POST)
+    existing_location = _get_existing_location(book)
+    if existing_location:
+        increase_form = BookItemIncreaseQuantityForm(request.POST)
+    else:
+        increase_form = BookItemAddForm(request.POST)
 
     if not increase_form.is_valid():
         if is_htmx:
@@ -442,6 +446,7 @@ def book_item_increase_view(request, book_id):
                 {
                     "book": book,
                     "stock_summary": _build_stock_summary(book),
+                    "existing_location": existing_location,
                     "increase_form": increase_form,
                     "decrease_form": BookItemRemoveForm(),
                 },
@@ -449,13 +454,18 @@ def book_item_increase_view(request, book_id):
         messages.error(request, "入力内容に誤りがあります。")
         return redirect("management:book_edit", book_id=book.id)
 
-    location = increase_form.cleaned_data["location"]
+    location = existing_location or increase_form.cleaned_data["location"]
     quantity = increase_form.cleaned_data["quantity"]
 
     with transaction.atomic():
         increase_stock(book, location, quantity)
 
     success_msg = f"『{book.title}』を{quantity}冊追加しました。"
+
+    new_existing_location = _get_existing_location(book)
+    new_increase_form = (
+        BookItemIncreaseQuantityForm() if new_existing_location else BookItemAddForm()
+    )
 
     if is_htmx:
         return render(
@@ -464,7 +474,8 @@ def book_item_increase_view(request, book_id):
             {
                 "book": book,
                 "stock_summary": _build_stock_summary(book),
-                "increase_form": BookItemAddForm(),
+                "existing_location": new_existing_location,
+                "increase_form": new_increase_form,
                 "decrease_form": BookItemRemoveForm(),
             },
         )
