@@ -89,12 +89,6 @@
         <h3 class="h5 mb-0">
             <i class="bi bi-journal-check me-2"></i>利用手続き
         </h3>
-
-        {% if book.has_available_items %}
-            <span class="badge bg-success">貸出可能</span>
-        {% else %}
-            <span class="badge bg-warning text-dark">貸出中（予約受付中）</span>
-        {% endif %}
     </div>
 
     <div class="card-body p-4">
