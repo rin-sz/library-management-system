@@ -96,9 +96,15 @@
                 </div>
 
                 {% if reservation.is_ready %}
-                  <span class="text-success fw-bold">
+                  <span class="text-muted">
                     受け取り可能
                   </span>
+                  <a
+                    href="{{ reservation.book.get_absolute_url }}"
+                    class="btn btn-success btn-sm"
+                  >
+                    利用手続きへ
+                  </a>
                 {% else %}
                   <span class="text-muted">
                     予約中
