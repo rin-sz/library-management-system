@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView
 from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Book, BookItem, Category
 from loan.forms import BorrowForm
@@ -8,7 +9,7 @@ from loan.models import Reservation, ReservationStatus
 
 
 # Create your views here.
-class BooklistView(ListView):
+class BooklistView(LoginRequiredMixin, ListView):
     model = Book
     template_name = "books/book_list.html"
     context_object_name = "books"
@@ -56,7 +57,7 @@ class BooklistView(ListView):
         return context
 
 
-class BookDetailView(DetailView):
+class BookDetailView(LoginRequiredMixin, DetailView):
     model = Book
     template_name = "books/book_detail.html"
     context_object_name = "book"
