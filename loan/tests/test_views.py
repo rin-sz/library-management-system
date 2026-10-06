@@ -1,4 +1,4 @@
-from datetime import timedelta
+from django.shortcuts import resolve_url
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.messages import get_messages
@@ -34,7 +34,8 @@ class BorrowViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         # LOGIN_URLへリダイレクトされることを確認
-        self.assertIn(settings.LOGIN_URL, response.url)
+        expected_url = f"{resolve_url(settings.LOGIN_URL)}?next={self.url}"
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     @tag("UT-LOAN-VIEW-002")
     def test_borrow_view_get_redirects_to_book_list(self):
