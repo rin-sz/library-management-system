@@ -59,7 +59,7 @@ ISBNを使用してOpenBDAPIから書籍情報を自動取得し、保管場所�
 | コード管理 | Git/GitHub |
 
 ## ER図
-![ER図](docs/img/ERdiagram.png)
+![ER図](docs/img/erdiagram.png)
 
 ※ CUSTOM_USERは、Django標準のAbstractUserを継承したカスタムユーザーモデル（accounts_customuser）です。ER図では、テーブル間の関係を把握しやすくするため、必要なカラムのみを記載しています。
 ## 開発時に工夫した点
