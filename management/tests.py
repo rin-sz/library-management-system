@@ -102,6 +102,7 @@ class DecreaseStockServiceTests(BookEditTestCaseBase):
         self.assertEqual(loaned_item.status, BookItem.Status.LOANED)
         self.assertEqual(reserved_item.status, BookItem.Status.RESERVED)
 
+    @tag("UT-EDIT-SVC-003")
     def test_raises_value_error_when_insufficient_stock(self):
         """テスト3: 在庫不足時にValueErrorが発生し、何も変更されない"""
         items = self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 2)
@@ -113,6 +114,7 @@ class DecreaseStockServiceTests(BookEditTestCaseBase):
             item.refresh_from_db()
             self.assertEqual(item.status, BookItem.Status.AVAILABLE)
 
+    @tag("UT-EDIT-SVC-004")
     def test_does_not_raise_protected_error_when_loan_history_exists(self):
         """テスト4: 貸出履歴を持つAVAILABLE個体でもProtectedErrorが起きずDISPOSEDにできる"""
         item = self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 1)[0]
@@ -131,7 +133,7 @@ class DecreaseStockServiceTests(BookEditTestCaseBase):
 
         try:
             decrease_stock(self.book, 1)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             self.fail(f"ProtectedError等の例外が発生してはならない: {e}")
 
         item.refresh_from_db()
@@ -141,6 +143,7 @@ class DecreaseStockServiceTests(BookEditTestCaseBase):
 class HelperFunctionTests(BookEditTestCaseBase):
     """views.py: _build_stock_summary, _get_existing_location のテスト。"""
 
+    @tag("UT-EDIT-SVC-005")
     def test_build_stock_summary_excludes_disposed(self):
         """テスト5: _build_stock_summaryがDISPOSED状態を集計から除外する"""
         self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 3)
@@ -150,11 +153,13 @@ class HelperFunctionTests(BookEditTestCaseBase):
 
         self.assertEqual(summary, [(self.location_a.name, 3)])
 
+    @tag("UT-EDIT-SVC-006")
     def test_get_existing_location_returns_none_when_no_stock(self):
         """テスト6: 在庫ゼロの本に対してNoneを返す"""
         location = _get_existing_location(self.book)
         self.assertIsNone(location)
 
+    @tag("UT-EDIT-SVC-007")
     def test_get_existing_location_returns_none_when_only_disposed(self):
         """テスト7: DISPOSEDのみ残っている本に対してNoneを返す(実質在庫なし扱い)"""
         self._create_book_items(self.location_a, BookItem.Status.DISPOSED, 2)
@@ -163,6 +168,7 @@ class HelperFunctionTests(BookEditTestCaseBase):
 
         self.assertIsNone(location)
 
+    @tag("UT-EDIT-SVC-008")
     def test_get_existing_location_returns_correct_location(self):
         """テスト8: AVAILABLE在庫がある本に対して正しいlocationを返す"""
         self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 1)
@@ -180,6 +186,7 @@ class BookItemIncreaseViewTests(BookEditTestCaseBase):
         self._login_with_permissions(["change_book"])
         self.url = reverse("management:book_item_increase", args=[self.book.id])
 
+    @tag("UT-EDIT-SVC-009")
     def test_requires_location_when_no_existing_stock(self):
         """テスト9: 既存在庫がない場合、location未指定だとバリデーションエラーになる"""
         response = self.client.post(self.url, {"quantity": 1}, HTTP_HX_REQUEST="true")
@@ -190,6 +197,7 @@ class BookItemIncreaseViewTests(BookEditTestCaseBase):
         self.assertIn("location", form.errors)
         self.assertEqual(BookItem.objects.filter(book=self.book).count(), 0)
 
+    @tag("UT-EDIT-SVC-010")
     def test_adds_to_existing_location_with_quantity_only(self):
         """テスト10: 既存在庫がある場合、quantityのみで既存locationに追加される"""
         self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 1)
@@ -211,6 +219,7 @@ class BookItemDecreaseViewTests(BookEditTestCaseBase):
         self._login_with_permissions(["change_book"])
         self.url = reverse("management:book_item_decrease", args=[self.book.id])
 
+    @tag("UT-EDIT-SVC-011")
     def test_decreases_stock_successfully(self):
         """テスト11: 正常に減少し、対象個体がDISPOSEDになる"""
         items = self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 3)
@@ -223,6 +232,7 @@ class BookItemDecreaseViewTests(BookEditTestCaseBase):
         ).count()
         self.assertEqual(disposed_count, 2)
 
+    @tag("UT-EDIT-SVC-012")
     def test_shows_error_on_insufficient_stock(self):
         """テスト12: 在庫不足時、quantityフィールドにエラーが表示される"""
         self._create_book_items(self.location_a, BookItem.Status.AVAILABLE, 1)
@@ -249,6 +259,7 @@ class BookUpdateViewTests(BookEditTestCaseBase):
         self._login_with_permissions(["change_book"])
         self.url = reverse("management:book_update", args=[self.book.id])
 
+    @tag("UT-EDIT-SVC-013")
     def test_updates_book_with_valid_input(self):
         """テスト13: 有効な入力でBookの書誌情報が更新される"""
         response = self.client.post(
@@ -269,6 +280,7 @@ class BookUpdateViewTests(BookEditTestCaseBase):
         self.assertEqual(self.book.title, "更新後タイトル")
         self.assertEqual(self.book.author, "更新後著者")
 
+    @tag("UT-EDIT-SVC-014")
     def test_does_not_update_with_invalid_input(self):
         """テスト14: 無効な入力(必須項目欠如)では更新されない"""
         original_title = self.book.title
